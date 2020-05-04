@@ -7,9 +7,6 @@
   #include <ModbusRTU.h> // https://github.com/emelianov/modbus-esp8266
   #include <ESP32Encoder.h> // https://github.com/madhephaestus/ESP32Encoder
 
-/*################ Constant ################*/
-  #define SLAVE_ID 1 // Used for modbus
-
 /*################ ESP32 Pin asignement ################*/
   #define Work_DRO_LED 2 /*__________________LED that shows that the DRO is set to "Work"    */
   #define Transmit_enable_pin 4 /*___________RTU Enable pin                                  */
@@ -35,6 +32,9 @@
   #define SpindleStopPin 36 /*__________________Available / Not used in this code (Input Only)  */
   #define SpindleStartPin 39 /*__________________Available / Not used in this code (Input Only)  */
 
+/*################ Constant ################*/
+  #define SLAVE_ID 1 // Used for modbus
+  
 /*################ Object Initialisation ################*/
   U8G2_ST7920_128X64_F_SW_SPI u8g2(U8G2_R0, LCD1, LCD2, LCD3, LCD4); //  LCD Initialisation  //
   ModbusRTU mb; // Modbus Initialisation //
