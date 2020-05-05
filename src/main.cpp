@@ -549,6 +549,7 @@
           }
         }
       }
+      
     //------------------- CoolantStartAndStop -------------------//
       void CoolantStartAndStop(){
         if (digitalRead(CoolantStartPin) == LOW){
@@ -565,6 +566,7 @@
           }
         }
       }
+
     //-------------------  Debug -------------------//
       void Debug() {
         unsigned long currentMillis = millis();
@@ -575,7 +577,6 @@
       }
 
 /*################ Setup and loop ################*/
-
   void setup(void) {
     xTaskCreatePinnedToCore(SecondCoreCode, "Task1", 10000, NULL, 0, &Task1, 0); /* Second core implementation */
 
@@ -590,7 +591,6 @@
       pinMode(Encode1_Switch_Pin, INPUT_PULLUP); // Encoder 1 switch pin //
       pinMode(Encode2_Switch_Pin, INPUT_PULLUP); // Encoder 2 switch pin //
     
-
     // Pin Modes //
       pinMode(Machine_DRO_Select_Switch, INPUT_PULLUP);
       pinMode(Work_DRO_Select_Switch, INPUT_PULLUP);
@@ -626,7 +626,6 @@
       mb.addHreg(16);    // coolant Start / stop Watchdog      
       mb.addHreg(17);    // setXYZ Watchdog      
     
-    
     /*################ From slave to master ################*/
       mb.addHreg(50);    // selected_DRO
       mb.addHreg(51);    // MPG_Axis_Select
@@ -639,7 +638,6 @@
       mb.addHreg(58);    // Spindle Watchdog
       mb.addHreg(59);    // Coolant Watchdog
       mb.addHreg(60);    // setXYZ Watchdog
-      
 
     // Serial debug. Runs only if variable "Debuging_Mode" is set to true //
       if (Debuging_Mode) {
