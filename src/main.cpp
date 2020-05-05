@@ -32,7 +32,7 @@
   #define Encode1_B_Pin 33 /*________________Encoder 1 A pin                                 */
   #define MPG_Multiplicaton_pin 34 /*________MPG Axis Selection switch pin                   */
   #define MPG_Axis_Select_pin 35 /*__________MPG Multiplication Selection switch pin         */
-  #define SpindleStopPin 36 /*__________________Available / Not used in this code (Input Only)  */
+  #define CoolantStartPin 36 /*__________________Available / Not used in this code (Input Only)  */
   #define SpindleStartPin 39 /*__________________Available / Not used in this code (Input Only)  */
 
 /*################ Object Initialisation ################*/
@@ -56,8 +56,11 @@
   bool SpindleSpeedOverrideChanged = false;
   String MPG_Selected_Axis;
   float MPG_Selected_Multiplication;
+  unsigned long currentMillis;
   unsigned long previousMillis = 0;
-  bool Debuging_Mode = true;
+  bool spindleStartCLicked = false;
+  bool coolantStartCLicked = false;
+  bool Debuging_Mode = false;
 
 /*################ Functions ################*/
   /* ################ CALLED BY CORE 0 (LCD) ################ */
@@ -447,29 +450,50 @@
 
     //------------------- SpindleStartAndStop -------------------//
       void SpindleStartAndStop(){
-        if (digitalRead(SpindleStartPin) == LOW){ // Spindle Start button pressed
-          Serial.println("test1");
-          mb.Hreg(58, 1);
-          while(mb.Hreg(15) != 1){
-            Serial.println("test2");
-            mb.task();
-            yield();
+        if (digitalRead(SpindleStartPin) == LOW){
+          spindleStartCLicked = true;
+          previousMillis = millis();
+          while(digitalRead(SpindleStartPin) == LOW){
+            currentMillis = millis();
+            if(currentMillis - previousMillis >= 2000 && spindleStartCLicked){
+              previousMillis = currentMillis;
+              spindleStartCLicked = false;
+              mb.Hreg(58, 2);
+              while(mb.Hreg(15) != 1){
+                mb.task();
+                yield();
+              }
+              mb.Hreg(58, 0);
+            }
+          } 
+        }else{
+          if(spindleStartCLicked){
+            spindleStartCLicked = false;
+            mb.Hreg(58, 1);
+            while(mb.Hreg(15) != 1){
+              mb.task();
+              yield();
+            }
+            mb.Hreg(58, 0);
           }
-          mb.Hreg(58, 0);
-        }
-
-        if (digitalRead(SpindleStopPin) == LOW){ // Spindle Start button pressed
-          Serial.println("test3");
-          mb.Hreg(59, 1);
-          while(mb.Hreg(15) != 1){
-            Serial.println("test4");
-            mb.task();
-            yield();
-          }
-          mb.Hreg(59, 0);
         }
       }
-
+    //------------------- CoolantStartAndStop -------------------//
+      void CoolantStartAndStop(){
+        if (digitalRead(CoolantStartPin) == LOW){
+          coolantStartCLicked = true;
+        }else{
+          if(coolantStartCLicked){
+            coolantStartCLicked = false;
+            mb.Hreg(59, 1);
+            while(mb.Hreg(16) != 1){
+              mb.task();
+              yield();
+            }
+            mb.Hreg(59, 0);
+          }
+        }
+      }
     //-------------------  Debug -------------------//
       void Debug() {
         unsigned long currentMillis = millis();
@@ -504,7 +528,7 @@
       pinMode(Work_DRO_LED, OUTPUT);
       pinMode(DTG_DRO_LED, OUTPUT);
       pinMode(SpindleStartPin, INPUT);
-      pinMode(SpindleStopPin, INPUT);
+      pinMode(CoolantStartPin, INPUT);
 
     // Modbus stuf //
       Serial1.begin(115200, SERIAL_8N1, rxdPin, txdPin);
@@ -528,6 +552,7 @@
       mb.addHreg(13);    // Feed override Watchdog
       mb.addHreg(14);    // Spindle Speed override Watchdog
       mb.addHreg(15);    // Spindle Start / stop Watchdog
+      mb.addHreg(16);    // coolant Start / stop Watchdog      
     
     /*################ From slave to master ################*/
       mb.addHreg(50);    // selected_DRO
@@ -538,8 +563,8 @@
       mb.addHreg(55);    // Hard or soft MPG / Selected DRO watchdog
       mb.addHreg(56);    // Feed Override Watchdog
       mb.addHreg(57);    // Spindle Speed Override Watchdog
-      mb.addHreg(58);    // Spindle Start
-      mb.addHreg(59);    // Spindle Stop
+      mb.addHreg(58);    // Spindle Watchdog
+      mb.addHreg(59);    // Coolant Watchdog
       
 
     // Serial debug. Runs only if variable "Debuging_Mode" is set to true //
@@ -558,6 +583,7 @@
     FeedOverRide();
     SpindleSpeedOverRide();
     SpindleStartAndStop();
+    CoolantStartAndStop();
     spindleLoad = mb.Hreg(8);    // Spindle Load (%)
     SpindleSpeed = mb.Hreg(9);    // Spindle RPM
     mb.task();
