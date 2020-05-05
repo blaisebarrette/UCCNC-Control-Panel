@@ -32,8 +32,8 @@
   #define Encode1_B_Pin 33 /*________________Encoder 1 A pin                                 */
   #define MPG_Multiplicaton_pin 34 /*________MPG Axis Selection switch pin                   */
   #define MPG_Axis_Select_pin 35 /*__________MPG Multiplication Selection switch pin         */
-  #define CoolantStartPin 36 /*__________________Available / Not used in this code (Input Only)  */
-  #define SpindleStartPin 39 /*__________________Available / Not used in this code (Input Only)  */
+  #define CoolantStartPin 36 /*______________Available / Not used in this code (Input Only)  */
+  #define SpindleStartPin 39 /*______________Available / Not used in this code (Input Only)  */
 
 /*################ Object Initialisation ################*/
   U8G2_ST7920_128X64_F_SW_SPI u8g2(U8G2_R0, LCD1, LCD2, LCD3, LCD4); //  LCD Initialisation  //
