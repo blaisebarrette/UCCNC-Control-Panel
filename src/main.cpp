@@ -7,6 +7,9 @@
   #include <ModbusRTU.h> // https://github.com/emelianov/modbus-esp8266
   #include <ESP32Encoder.h> // https://github.com/madhephaestus/ESP32Encoder
 
+/*################ Constant ################*/
+  #define SLAVE_ID 1 // Used for modbus
+
 /*################ ESP32 Pin asignement ################*/
   #define Work_DRO_LED 2 /*__________________LED that shows that the DRO is set to "Work"    */
   #define Transmit_enable_pin 4 /*___________RTU Enable pin                                  */
@@ -32,9 +35,6 @@
   #define SpindleStopPin 36 /*__________________Available / Not used in this code (Input Only)  */
   #define SpindleStartPin 39 /*__________________Available / Not used in this code (Input Only)  */
 
-/*################ Constant ################*/
-  #define SLAVE_ID 1 // Used for modbus
-  
 /*################ Object Initialisation ################*/
   U8G2_ST7920_128X64_F_SW_SPI u8g2(U8G2_R0, LCD1, LCD2, LCD3, LCD4); //  LCD Initialisation  //
   ModbusRTU mb; // Modbus Initialisation //
@@ -57,7 +57,7 @@
   String MPG_Selected_Axis;
   float MPG_Selected_Multiplication;
   unsigned long previousMillis = 0;
-  bool Debuging_Mode = false;
+  bool Debuging_Mode = true;
 
 /*################ Functions ################*/
   /* ################ CALLED BY CORE 0 (LCD) ################ */
@@ -420,7 +420,6 @@
             mb.Hreg(55, selected_DRO);
             mb.task();
             yield();
-            Serial.println(selected_DRO);
           }
            mb.Hreg(55, 0);
         }
@@ -449,8 +448,10 @@
     //------------------- SpindleStartAndStop -------------------//
       void SpindleStartAndStop(){
         if (digitalRead(SpindleStartPin) == LOW){ // Spindle Start button pressed
+          Serial.println("test1");
           mb.Hreg(58, 1);
           while(mb.Hreg(15) != 1){
+            Serial.println("test2");
             mb.task();
             yield();
           }
@@ -458,8 +459,10 @@
         }
 
         if (digitalRead(SpindleStopPin) == LOW){ // Spindle Start button pressed
+          Serial.println("test3");
           mb.Hreg(59, 1);
           while(mb.Hreg(15) != 1){
+            Serial.println("test4");
             mb.task();
             yield();
           }
@@ -472,7 +475,7 @@
         unsigned long currentMillis = millis();
         if (currentMillis - previousMillis >= 250) {
           previousMillis = currentMillis;
-          Serial.printf("E1prev = %d E2prev = %d MPG_Axis_Select_val =  %d MPG_Multiplicaton = %d E1current = %d E2current = %d selected_DRO = %d \n", E1prev, E2prev, MPG_Axis_Select_val, MPG_Multiplicaton, E1current, E2current, selected_DRO);
+          //Serial.printf("E1prev = %d E2prev = %d MPG_Axis_Select_val =  %d MPG_Multiplicaton = %d E1current = %d E2current = %d selected_DRO = %d \n", E1prev, E2prev, MPG_Axis_Select_val, MPG_Multiplicaton, E1current, E2current, selected_DRO);
         }
       }
 
@@ -500,8 +503,8 @@
       pinMode(Machine_DRO_LED, OUTPUT);
       pinMode(Work_DRO_LED, OUTPUT);
       pinMode(DTG_DRO_LED, OUTPUT);
-      pinMode(SpindleStartPin, INPUT_PULLUP);
-      pinMode(SpindleStopPin, INPUT_PULLUP);
+      pinMode(SpindleStartPin, INPUT);
+      pinMode(SpindleStopPin, INPUT);
 
     // Modbus stuf //
       Serial1.begin(115200, SERIAL_8N1, rxdPin, txdPin);
@@ -536,7 +539,7 @@
       mb.addHreg(56);    // Feed Override Watchdog
       mb.addHreg(57);    // Spindle Speed Override Watchdog
       mb.addHreg(58);    // Spindle Start
-      mb.addHreg(59);    // Spindle Sstop
+      mb.addHreg(59);    // Spindle Stop
       
 
     // Serial debug. Runs only if variable "Debuging_Mode" is set to true //
