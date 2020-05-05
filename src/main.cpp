@@ -446,21 +446,24 @@
         if (digitalRead(DTG_DRO_Select_Switch) == LOW){
           DTG_DRO_Clicked = true;
           previousMillis = millis();
-          while(digitalRead(DTG_DRO_Select_Switch) == LOW){
+          while(digitalRead(DTG_DRO_Select_Switch) == LOW && mb.Hreg(60) == 0){
             Serial.println("test 2");
             currentMillis = millis();
             if(currentMillis - previousMillis >= 2000 && DTG_DRO_Clicked){
               previousMillis = currentMillis;
               DTG_DRO_Clicked = false;
-              mb.Hreg(62, 1);
-              while(mb.Hreg(19) != 1){
+              mb.Hreg(60, 3);
+              while(mb.Hreg(17) != 1){
                 Serial.println("test 3");
                 mb.task();
                 yield();
               }
-              mb.Hreg(62, 0);
             }
-          } 
+            mb.Hreg(60, 0);
+            mb.task();
+            yield();
+            Set_DRO_Variables();
+          }
         }else{
           if(DTG_DRO_Clicked){
             DTG_DRO_Clicked = false;
@@ -576,9 +579,8 @@
       mb.addHreg(14);    // Spindle Speed override Watchdog
       mb.addHreg(15);    // Spindle Start / stop Watchdog
       mb.addHreg(16);    // coolant Start / stop Watchdog      
-      mb.addHreg(17);    // setX Watchdog      
-      mb.addHreg(18);    // setY Watchdog      
-      mb.addHreg(19);    // setZ Watchdog      
+      mb.addHreg(17);    // setXYZ Watchdog      
+    
     
     /*################ From slave to master ################*/
       mb.addHreg(50);    // selected_DRO
@@ -591,9 +593,7 @@
       mb.addHreg(57);    // Spindle Speed Override Watchdog
       mb.addHreg(58);    // Spindle Watchdog
       mb.addHreg(59);    // Coolant Watchdog
-      mb.addHreg(60);    // setX Watchdog
-      mb.addHreg(61);    // setY Watchdog
-      mb.addHreg(62);    // setZ Watchdog
+      mb.addHreg(60);    // setXYZ Watchdog
       
 
     // Serial debug. Runs only if variable "Debuging_Mode" is set to true //
