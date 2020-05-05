@@ -60,8 +60,10 @@
   unsigned long previousMillis = 0;
   bool spindleStartCLicked = false;
   bool coolantStartCLicked = false;
+  bool machine_DRO_Clicked = false;
+  bool work_DRO_Clicked = false;
   bool DTG_DRO_Clicked = false;
-  bool Debuging_Mode = true;
+  bool Debuging_Mode = false;
 
 /*################ Functions ################*/
   /* ################ CALLED BY CORE 0 (LCD) ################ */
@@ -421,7 +423,6 @@
         if(HardOrSoftMPG_Changed){
           HardOrSoftMPG_Changed = false;
           while (selected_DRO != mb.Hreg(12)){
-            Serial.println("test 1");
             mb.Hreg(55, selected_DRO);
             mb.task();
             yield();
@@ -434,27 +435,71 @@
         }
 
         if (digitalRead(Machine_DRO_Select_Switch) == LOW) {
-          selected_DRO = 1;
-          HardOrSoftMPG_Changed = true;
-          hard_MPG = true;
+          machine_DRO_Clicked = true;
+          previousMillis = millis();
+          while(digitalRead(Machine_DRO_Select_Switch) == LOW && mb.Hreg(60) == 0){
+            currentMillis = millis();
+            if(currentMillis - previousMillis >= 2000 && machine_DRO_Clicked){
+              previousMillis = currentMillis;
+              machine_DRO_Clicked = false;
+              mb.Hreg(60, 1);
+              while(mb.Hreg(17) != 1){
+                mb.task();
+                yield();
+              }
+            }
+            mb.Hreg(60, 0);
+            mb.task();
+            yield();
+            Set_DRO_Variables();
+          }
+        }else{
+          if(machine_DRO_Clicked){
+            machine_DRO_Clicked = false;
+            selected_DRO = 1;
+            HardOrSoftMPG_Changed = true;
+            hard_MPG = true;
+          }
         }
-        if (digitalRead(Work_DRO_Select_Switch) == LOW) {
-          selected_DRO = 2;
-          HardOrSoftMPG_Changed = true;
-          hard_MPG = true;
+
+        if(digitalRead(Work_DRO_Select_Switch) == LOW) {
+          work_DRO_Clicked = true;
+          previousMillis = millis();
+          while(digitalRead(Work_DRO_Select_Switch) == LOW && mb.Hreg(60) == 0){
+            currentMillis = millis();
+            if(currentMillis - previousMillis >= 2000 && work_DRO_Clicked){
+              previousMillis = currentMillis;
+              work_DRO_Clicked = false;
+              mb.Hreg(60, 2);
+              while(mb.Hreg(17) != 1){
+                mb.task();
+                yield();
+              }
+            }
+            mb.Hreg(60, 0);
+            mb.task();
+            yield();
+            Set_DRO_Variables();
+          }
+        }else{
+          if(work_DRO_Clicked){
+            work_DRO_Clicked = false;
+            selected_DRO = 2;
+            HardOrSoftMPG_Changed = true;
+            hard_MPG = true;
+          }
         }
+
         if (digitalRead(DTG_DRO_Select_Switch) == LOW){
           DTG_DRO_Clicked = true;
           previousMillis = millis();
           while(digitalRead(DTG_DRO_Select_Switch) == LOW && mb.Hreg(60) == 0){
-            Serial.println("test 2");
             currentMillis = millis();
             if(currentMillis - previousMillis >= 2000 && DTG_DRO_Clicked){
               previousMillis = currentMillis;
               DTG_DRO_Clicked = false;
               mb.Hreg(60, 3);
               while(mb.Hreg(17) != 1){
-                Serial.println("test 3");
                 mb.task();
                 yield();
               }
