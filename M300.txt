@@ -1,0 +1,225 @@
+/********************************************/
+/*          Get modus from slaves           */
+/********************************************/
+    ushort[] Slave_Master_array = new ushort[13];
+    exec.GetModbusregisters(50,13, out Slave_Master_array);
+    ushort _Selected_DRO = Slave_Master_array[0]; // 50
+    ushort _MPG_axis = Slave_Master_array[1]; // 51
+    ushort _MPG_Multiplication = Slave_Master_array[2]; // 52
+    ushort _FeedOverride = Slave_Master_array[3]; // 53
+    ushort _SpindleSpeedOverride = Slave_Master_array[4]; // 54
+    ushort _HardSoftMPG_Watchdog = Slave_Master_array[5]; // 55
+    ushort _FeedOverrideWatchdog = Slave_Master_array[6]; // 56    
+    ushort _SpindleSpeedOverrideWatchdog = Slave_Master_array[7]; // 57    
+    ushort _SpindleStart = Slave_Master_array[8]; // 58    
+    ushort _CoolantStart = Slave_Master_array[9]; // 59    
+    ushort _SetXYZ = Slave_Master_array[10]; // 60
+    
+
+/********************************************/
+/*           Send modus to slaves           */
+/********************************************/
+    //---- DRO ----//
+        ushort[] Master_Slave_array = new ushort[10];
+        float XDRO, YDRO, ZDRO, CDRO;
+        switch(_Selected_DRO){
+            case 1: //---- DRO Machine ----//
+                XDRO = Convert.ToSingle(AS3.Getfield(871));
+                YDRO = Convert.ToSingle(AS3.Getfield(872));
+                ZDRO = Convert.ToSingle(AS3.Getfield(873));
+                CDRO = Convert.ToSingle(AS3.Getfield(876));
+                break;
+
+            case 2: //---- DRO Work ----//
+                XDRO =Convert.ToSingle(AS3.Getfield(226));
+                YDRO = Convert.ToSingle(AS3.Getfield(227));
+                ZDRO = Convert.ToSingle(AS3.Getfield(228));
+                CDRO = Convert.ToSingle(AS3.Getfield(231));
+                break;
+
+            case 3: //---- DRO Distance to go ----//
+                XDRO = Convert.ToSingle(AS3.Getfield(2444));
+                YDRO = Convert.ToSingle(AS3.Getfield(2445));
+                ZDRO = Convert.ToSingle(AS3.Getfield(2446));
+                CDRO = Convert.ToSingle(AS3.Getfield(2449));
+                break;
+
+            default:
+                XDRO = Convert.ToSingle(AS3.Getfield(871));
+                YDRO = Convert.ToSingle(AS3.Getfield(872));
+                ZDRO = Convert.ToSingle(AS3.Getfield(873));
+                CDRO = Convert.ToSingle(AS3.Getfield(876));
+                break;
+            }
+
+            byte[] fBytes;
+            fBytes = BitConverter.GetBytes(XDRO);
+            Master_Slave_array[1] = BitConverter.ToUInt16(fBytes, 0); 
+            Master_Slave_array[0] = BitConverter.ToUInt16(fBytes, 2);
+            fBytes = BitConverter.GetBytes(YDRO);
+            Master_Slave_array[3] = BitConverter.ToUInt16(fBytes, 0); 
+            Master_Slave_array[2] = BitConverter.ToUInt16(fBytes, 2);
+            fBytes = BitConverter.GetBytes(ZDRO);
+            Master_Slave_array[5] = BitConverter.ToUInt16(fBytes, 0); 
+            Master_Slave_array[4] = BitConverter.ToUInt16(fBytes, 2);
+            fBytes = BitConverter.GetBytes(CDRO);
+            Master_Slave_array[7] = BitConverter.ToUInt16(fBytes, 0); 
+            Master_Slave_array[6] = BitConverter.ToUInt16(fBytes, 2);
+
+    //---- Spindle Load & Spindle RPM ----//
+            Master_Slave_array[8] = 0; // Spindle Load
+            string vIn = AS3.Getfield(870);
+            float flt1 = float.Parse(vIn);
+            Master_Slave_array[9] = Convert.ToUInt16(flt1);
+
+            exec.SetModbusregisters(0, Master_Slave_array);
+
+    //---- Hard or soft MPG ----//
+        ushort isHardMPG = 0;
+        if(_HardSoftMPG_Watchdog != 0){
+            exec.Callbutton(228);
+            exec.SetModbusregister(12, _HardSoftMPG_Watchdog);
+        }
+
+        ushort isHardInUCCNCRegisters; exec.GetModbusregister(12, out isHardInUCCNCRegisters);
+        if(isHardInUCCNCRegisters != 0){isHardInUCCNCRegisters = 1;}
+        ushort isHardInButtons;
+        if(AS3jog.Getbuttonstate(161) == true || AS3jog.Getbuttonstate(162) == true){
+            isHardInButtons = 0;
+        }else{
+            isHardInButtons = 1;
+        }
+
+        if(isHardInButtons != isHardInUCCNCRegisters){ // Changed in UCCNC
+            if(isHardInButtons == 0){
+                exec.SetModbusregister(12, 0);
+                isHardMPG = 0;
+            }else{
+                exec.SetModbusregister(12, _Selected_DRO);
+                isHardMPG = 1;
+            }
+
+        }
+
+    //---- Feed Override ----//
+        // Change made in Control panel
+        if(_FeedOverrideWatchdog == 1){// Control panel watchdog signals a change
+            AS3.Setfield(_FeedOverride,232); // insert value from register into UCCNC field
+            AS3.Validatefield(232); // Validate entry
+            exec.SetModbusregister(10, _FeedOverride); //Equalise registers
+            exec.SetModbusregister(13, 2); // Confirm to Control Panel that message is recieved
+        }
+        if (_FeedOverrideWatchdog == 0){ //Whait for confirmation from Control panel
+            exec.SetModbusregister(13, 0); // All is equalised, set watchdog to sleep!
+        }
+
+        // Change made in UCCNC
+        ushort FeedOverrideInUCCNCRegister; exec.GetModbusregister(10, out FeedOverrideInUCCNCRegister);
+        string ValTemp1 = AS3.Getfield(232);
+        string ValTemp2 = ValTemp1.Substring(0, ValTemp1.Length-1);
+        ushort FeedOverideInUCCNCField = Convert.ToUInt16(ValTemp2);
+        if(FeedOverideInUCCNCField != FeedOverrideInUCCNCRegister){
+            exec.SetModbusregister(10, FeedOverideInUCCNCField); // Plave Value in register
+            exec.SetModbusregister(13, 1); // UCCNC watch dog sends signal to Control panel that someting has changed
+        }
+        if (_FeedOverrideWatchdog == 2){ //Whait for confirmation from Control panel that display has been updated
+            exec.SetModbusregister(13, 0); // All is equalised, set watchdog to sleep!
+        }
+
+    //---- Spindle Speed Override ----//
+        // Change made in Control panel
+        if(_SpindleSpeedOverrideWatchdog == 1){// Control panel watchdog signals a change
+            AS3.Setfield(_SpindleSpeedOverride,233); // insert value from register into UCCNC field
+            AS3.Validatefield(233); // Validate entry
+            exec.SetModbusregister(11, _SpindleSpeedOverride); //Equalise registers
+            exec.SetModbusregister(14, 2); // Confirm to Control Panel that message is recieved
+        }
+        if (_SpindleSpeedOverrideWatchdog == 0){ //Whait for confirmation from Control panel
+            exec.SetModbusregister(14, 0); // All is equalised, set watchdog to sleep!
+        }
+
+        // Change made in UCCNC
+        ushort SpindleSpeedOverrideInUCCNCRegister; exec.GetModbusregister(11, out SpindleSpeedOverrideInUCCNCRegister);
+        string ValTemp3 = AS3.Getfield(233);
+        string ValTemp4 = ValTemp3.Substring(0, ValTemp3.Length-1);
+        ushort SpindleSpeederideInUCCNCField = Convert.ToUInt16(ValTemp4);
+        if(SpindleSpeederideInUCCNCField != SpindleSpeedOverrideInUCCNCRegister){
+            exec.SetModbusregister(11, SpindleSpeederideInUCCNCField); // Plave Value in register
+            exec.SetModbusregister(14, 1); // UCCNC watch dog sends signal to Control panel that someting has changed
+        }
+        if (_SpindleSpeedOverrideWatchdog == 2){ //Whait for confirmation from Control panel that display has been updated
+            exec.SetModbusregister(14, 0); // All is equalised, set watchdog to sleep!
+        }
+
+    //---- Axis and scale select ----//
+        if(isHardInButtons == 1){ // If Hard MPG is selected
+            if(_MPG_axis == 1){exec.Callbutton(220);}
+            if(_MPG_axis == 2){exec.Callbutton(221);}
+            if(_MPG_axis == 3){exec.Callbutton(222);}
+            if(_MPG_axis == 4){exec.Callbutton(225);}
+            if(_MPG_Multiplication == 1){exec.Callbutton(241);}
+            if(_MPG_Multiplication == 2){exec.Callbutton(164);}
+            if(_MPG_Multiplication == 3){exec.Callbutton(165);}
+            if(_MPG_Multiplication == 4){exec.Callbutton(166);}
+        }
+
+    //---- Spindle Start And Stop ----//
+        ushort SpindleWatchdog; exec.GetModbusregister(15, out SpindleWatchdog);
+        if(_SpindleStart == 1 && SpindleWatchdog != 1){
+            if(AS3.Getbuttonstate(114) || AS3.Getbuttonstate(115)){
+                AS3.Switchbutton(false, 114);
+                AS3.Switchbutton(false, 115);
+            }else{
+                AS3.Switchbutton(true, 114);
+            }
+            exec.SetModbusregister(15, 1);
+        }
+
+        if(_SpindleStart == 2 && SpindleWatchdog != 1){
+            if(AS3.Getbuttonstate(114) || AS3.Getbuttonstate(115)){
+                AS3.Switchbutton(false, 114);
+                AS3.Switchbutton(false, 115);
+            }else{
+                AS3.Switchbutton(true, 115);
+            }
+            exec.SetModbusregister(15, 1);
+        }
+
+        if(_SpindleStart == 0){
+            exec.SetModbusregister(15, 0);
+        }
+
+    //---- Coolant Start And Stop ----//
+        ushort CoolantWatchdog; exec.GetModbusregister(16, out CoolantWatchdog);
+        if(_CoolantStart == 1 && CoolantWatchdog != 1){
+            if(AS3.Getbuttonstate(117)){
+                AS3.Switchbutton(false, 117);
+            }else{
+                AS3.Switchbutton(true, 117);
+            }
+            exec.SetModbusregister(16, 1);
+        }
+
+        if(_CoolantStart == 0){
+            exec.SetModbusregister(16, 0);
+        }
+
+    //---- Set XYZ ----//
+        if(_SetXYZ == 1){
+            exec.Callbutton(100);
+            exec.SetModbusregister(17, 1);
+        }
+
+        if(_SetXYZ == 2){
+            exec.Callbutton(101);
+            exec.SetModbusregister(17, 1);
+        }
+        
+        if(_SetXYZ == 3){
+            exec.Callbutton(102);
+            exec.SetModbusregister(17, 1);
+        }
+
+        if(_SetXYZ == 0){
+            exec.SetModbusregister(17, 0);
+        }
