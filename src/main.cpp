@@ -7,9 +7,6 @@
   #include <ModbusRTU.h> // https://github.com/emelianov/modbus-esp8266
   #include <ESP32Encoder.h> // https://github.com/madhephaestus/ESP32Encoder
 
-/*################ Constant ################*/
-  #define SLAVE_ID 1 // Used for modbus
-
 /*################ ESP32 Pin asignement ################*/
   #define Work_DRO_LED 2 /*__________________LED that shows that the DRO is set to "Work"    */
   #define Transmit_enable_pin 4 /*___________RTU Enable pin                                  */
@@ -34,6 +31,9 @@
   #define MPG_Axis_Select_pin 35 /*__________MPG Multiplication Selection switch pin         */
   #define CoolantStartPin 36 /*______________Available / Not used in this code (Input Only)  */
   #define SpindleStartPin 39 /*______________Available / Not used in this code (Input Only)  */
+
+/*################ Constant ################*/
+  #define SLAVE_ID 1 // Used for modbus
 
 /*################ Object Initialisation ################*/
   U8G2_ST7920_128X64_F_SW_SPI u8g2(U8G2_R0, LCD1, LCD2, LCD3, LCD4); //  LCD Initialisation  //
@@ -243,7 +243,7 @@
           LCD_Spindle_Speed_Override();
           LCD_Spindle_Speed_RPM();
           u8g2.sendBuffer();
-          delay(1);
+          delay(15);
           //--- Loop Section End ----//
         }
       }
@@ -427,7 +427,7 @@
             mb.task();
             yield();
           }
-           mb.Hreg(55, 0);
+          mb.Hreg(55, 0);
         }
 
         if(selected_DRO != mb.Hreg(12) && mb.Hreg(12) == 0){
@@ -439,20 +439,20 @@
           previousMillis = millis();
           while(digitalRead(Machine_DRO_Select_Switch) == LOW && mb.Hreg(60) == 0){
             currentMillis = millis();
-            if(currentMillis - previousMillis >= 2000 && machine_DRO_Clicked){
-              previousMillis = currentMillis;
-              machine_DRO_Clicked = false;
-              mb.Hreg(60, 1);
-              while(mb.Hreg(17) != 1){
-                mb.task();
-                yield();
+              if(currentMillis - previousMillis >= 2000 && machine_DRO_Clicked){
+                previousMillis = currentMillis;
+                machine_DRO_Clicked = false;
+                mb.Hreg(60, 1);
+                while(mb.Hreg(17) != 1){
+                  mb.task();
+                  yield();
+                }
               }
+              mb.Hreg(60, 0);
+              mb.task();
+              yield();
+              Set_DRO_Variables();
             }
-            mb.Hreg(60, 0);
-            mb.task();
-            yield();
-            Set_DRO_Variables();
-          }
         }else{
           if(machine_DRO_Clicked){
             machine_DRO_Clicked = false;
