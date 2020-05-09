@@ -63,6 +63,7 @@
   bool machine_DRO_Clicked = false;
   bool work_DRO_Clicked = false;
   bool DTG_DRO_Clicked = false;
+  bool isMoving = false;
   bool Debuging_Mode = false;
 
 /*################ Functions ################*/
@@ -217,7 +218,7 @@
         u8g2.setFont(u8g2_font_7x14B_tf);
         u8g2.drawStr(88, 11, "JOG");
         static char CharBuffer[10];
-        if (hard_MPG) {
+        if (!isMoving) {
           u8g2.setFont(u8g2_font_7x13B_tf);
           sprintf(CharBuffer, "%S: %.3f", MPG_Selected_Axis, MPG_Selected_Multiplication);
           u8g2.drawStr(72, 24, CharBuffer);
@@ -267,11 +268,6 @@
             digitalWrite(Work_DRO_LED, LOW);
             digitalWrite(DTG_DRO_LED, HIGH);
             break;
-        }
-        if(!hard_MPG && mb.Hreg(18) != 1){
-            digitalWrite(Machine_DRO_LED, LOW);
-            digitalWrite(Work_DRO_LED, LOW);
-            digitalWrite(DTG_DRO_LED, LOW);
         }
       }
     
@@ -379,9 +375,12 @@
       }
 
     //------------------- MPG_control_Select -------------------//
+      int previous_MPG_Axis_Select_val, previous_MPG_Multiplicaton;
       void MPG_control_Select() {
-        if (hard_MPG) {
-          int MPG_Axis_Select_val = analogRead(MPG_Axis_Select_pin);
+        MPG_Axis_Select_val = analogRead(MPG_Axis_Select_pin);
+        MPG_Multiplicaton = analogRead(MPG_Multiplicaton_pin);
+        if (MPG_Axis_Select_val != previous_MPG_Axis_Select_val || MPG_Multiplicaton != previous_MPG_Multiplicaton) {
+          previous_MPG_Axis_Select_val = MPG_Axis_Select_val;
           if (MPG_Axis_Select_val < 500) {
             mb.Hreg(51, 1);
             MPG_Selected_Axis = "X";
@@ -396,7 +395,7 @@
             MPG_Selected_Axis = "C";
           }
 
-          int MPG_Multiplicaton = analogRead(MPG_Multiplicaton_pin);
+          previous_MPG_Multiplicaton = MPG_Multiplicaton;
           if (MPG_Multiplicaton < 500) {
             mb.Hreg(52, 4);
             MPG_Selected_Multiplication = 1.00;
@@ -413,27 +412,8 @@
         }
       }
 
-    //------------------- Test_Hard_MPG_State -------------------//
-      void Test_Hard_MPG_State() {
-        if(selected_DRO != 0){
-          mb.Hreg(50, selected_DRO);
-          hard_MPG = true;
-        }
-
-        if(HardOrSoftMPG_Changed){
-          HardOrSoftMPG_Changed = false;
-          while (selected_DRO != mb.Hreg(12)){
-            mb.Hreg(55, selected_DRO);
-            mb.task();
-            yield();
-          }
-          mb.Hreg(55, 0);
-        }
-
-        if(selected_DRO != mb.Hreg(12) && mb.Hreg(12) == 0){
-          hard_MPG = false;
-        }
-
+    //------------------- Test_DRO_Botton_State -------------------//
+      void Test_DRO_Botton_State() {
         if (digitalRead(Machine_DRO_Select_Switch) == LOW) {
           machine_DRO_Clicked = true;
           previousMillis = millis();
@@ -457,8 +437,7 @@
           if(machine_DRO_Clicked){
             machine_DRO_Clicked = false;
             selected_DRO = 1;
-            HardOrSoftMPG_Changed = true;
-            hard_MPG = true;
+             mb.Hreg(50, selected_DRO);
           }
         }
 
@@ -485,8 +464,7 @@
           if(work_DRO_Clicked){
             work_DRO_Clicked = false;
             selected_DRO = 2;
-            HardOrSoftMPG_Changed = true;
-            hard_MPG = true;
+             mb.Hreg(50, selected_DRO);
           }
         }
 
@@ -513,8 +491,7 @@
           if(DTG_DRO_Clicked){
             DTG_DRO_Clicked = false;
             selected_DRO = 3;
-            HardOrSoftMPG_Changed = true;
-            hard_MPG = true;
+             mb.Hreg(50, selected_DRO);
           }
         }
       }
@@ -619,7 +596,7 @@
       mb.addHreg(9);    // Spindle RPM
       mb.addHreg(10);    // Feed Override
       mb.addHreg(11);    // Spindle Speed Override (%)
-      mb.addHreg(12);    // Hard or soft MPG / Selected DRO
+      mb.addHreg(12);    // Not used
       mb.addHreg(13);    // Feed override Watchdog
       mb.addHreg(14);    // Spindle Speed override Watchdog
       mb.addHreg(15);    // Spindle Start / stop Watchdog
@@ -633,7 +610,7 @@
       mb.addHreg(52);    // MPG_Multiplicaton
       mb.addHreg(53);    // Feed Override
       mb.addHreg(54);    // Spindle Speed Override
-      mb.addHreg(55);    // Hard or soft MPG / Selected DRO watchdog
+      mb.addHreg(55);    // Not used
       mb.addHreg(56);    // Feed Override Watchdog
       mb.addHreg(57);    // Spindle Speed Override Watchdog
       mb.addHreg(58);    // Spindle Watchdog
@@ -649,7 +626,7 @@
 
   void loop(void) {
     if (Debuging_Mode){Debug();}
-    Test_Hard_MPG_State();
+    Test_DRO_Botton_State();
     Set_DRO_Variables();
     DRO_Select_LED();
     MPG_control_Select();
@@ -659,6 +636,7 @@
     CoolantStartAndStop();
     spindleLoad = mb.Hreg(8);    // Spindle Load (%)
     SpindleSpeed = mb.Hreg(9);    // Spindle RPM
+    if(mb.Hreg(18) == 1){isMoving = true;}else{isMoving = false;}
     mb.task();
     yield();
     delay(1);

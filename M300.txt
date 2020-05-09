@@ -8,7 +8,7 @@
     ushort _MPG_Multiplication = Slave_Master_array[2]; // 52
     ushort _FeedOverride = Slave_Master_array[3]; // 53
     ushort _SpindleSpeedOverride = Slave_Master_array[4]; // 54
-    ushort _HardSoftMPG_Watchdog = Slave_Master_array[5]; // 55
+    ushort _Not_Used = Slave_Master_array[5]; // 55
     ushort _FeedOverrideWatchdog = Slave_Master_array[6]; // 56    
     ushort _SpindleSpeedOverrideWatchdog = Slave_Master_array[7]; // 57    
     ushort _SpindleStart = Slave_Master_array[8]; // 58    
@@ -74,36 +74,16 @@
 
             exec.SetModbusregisters(0, Master_Slave_array);
 
-    //---- Hard or soft MPG ----//
-        ushort isHardMPG = 0;
-        if(_HardSoftMPG_Watchdog != 0){
-            exec.Callbutton(228);
-            exec.SetModbusregister(12, _HardSoftMPG_Watchdog);
-        }
-
-        if(AS3.GetLED(137) == true || AS3.GetLED(138) == true){ // Watch MPG LED in "Diagnostic" page
-            exec.Callbutton(228); // Acivate "MPG Multi" Button
-            isHardMPG = 1;
-        }
-
-        ushort isHardInUCCNCRegisters; exec.GetModbusregister(12, out isHardInUCCNCRegisters);
-        if(isHardInUCCNCRegisters != 0){isHardInUCCNCRegisters = 1;}
-        ushort isHardInButtons;
-
+    //---- MPG state ----//
+        ushort HardMPG = 0;
         if(AS3jog.Getbuttonstate(161) == true || AS3jog.Getbuttonstate(162) == true || exec.IsMoving()){
-            isHardInButtons = 0;
+            HardMPG = 0;
         }else{
-            isHardInButtons = 1;
+            HardMPG = 1;
         }
 
-        if(isHardInButtons != isHardInUCCNCRegisters){ // Changed in UCCNC
-            if(isHardInButtons == 0){
-                exec.SetModbusregister(12, 0);
-                isHardMPG = 0;
-            }else{
-                exec.SetModbusregister(12, _Selected_DRO);
-                isHardMPG = 1;
-            }
+        if((AS3.GetLED(137) == true || AS3.GetLED(138) == true) && (AS3jog.Getbuttonstate(226) != true && AS3jog.Getbuttonstate(227) != true)){ // Watch MPG LED in "Diagnostic" page
+            exec.Callbutton(228); // Acivate "MPG Multi" Button
         }
 
         if(exec.IsMoving()){
@@ -163,7 +143,7 @@
         }
 
     //---- Axis and scale select ----//
-        if(isHardInButtons == 1){ // If Hard MPG is selected
+        if(HardMPG == 1){ // If Hard MPG is selected
             if(_MPG_axis == 1){exec.Callbutton(220);}
             if(_MPG_axis == 2){exec.Callbutton(221);}
             if(_MPG_axis == 3){exec.Callbutton(222);}
