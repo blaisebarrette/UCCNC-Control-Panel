@@ -249,7 +249,7 @@
       }
 
   /* ################ CALLED BY CORE 1 (Modbus) ################ */
-    //-------------------  DRO_Select_LED -------------------//
+    //------------------- DRO_Select_LED -------------------//
       void DRO_Select_LED() {
         switch (selected_DRO){
           case 1:
@@ -268,14 +268,14 @@
             digitalWrite(DTG_DRO_LED, HIGH);
             break;
         }
-        if(!hard_MPG){
+        if(!hard_MPG && mb.Hreg(18) != 1){
             digitalWrite(Machine_DRO_LED, LOW);
             digitalWrite(Work_DRO_LED, LOW);
             digitalWrite(DTG_DRO_LED, LOW);
         }
       }
     
-    //-------------------  Set_DRO_Variables -------------------//
+    //------------------- Set_DRO_Variables -------------------//
       void Set_DRO_Variables() {
             droX1 = mb.Hreg(0);
             droX2 = mb.Hreg(1);
@@ -287,7 +287,7 @@
             droC2 = mb.Hreg(7);
       }
 
-    //-------------------  FeedOverRide -------------------//
+    //------------------- FeedOverRide -------------------//
       void FeedOverRide() {
         if (digitalRead(Encode1_Switch_Pin) == LOW) {
           E1current = 100;
@@ -332,7 +332,7 @@
           mb.Hreg(56, 0); // All is equalised, set watchdog to sleep!
         }
       }
-    //-------------------  SpindleSpeedOverRide -------------------//
+    //------------------- SpindleSpeedOverRide -------------------//
       void SpindleSpeedOverRide() {  
         if (digitalRead(Encode2_Switch_Pin) == LOW) {
           E2current = 100;
@@ -378,7 +378,7 @@
         }
       }
 
-    //-------------------  MPG_control_Select -------------------//
+    //------------------- MPG_control_Select -------------------//
       void MPG_control_Select() {
         if (hard_MPG) {
           int MPG_Axis_Select_val = analogRead(MPG_Axis_Select_pin);
@@ -413,7 +413,7 @@
         }
       }
 
-    //-------------------  Test_Hard_MPG_State -------------------//
+    //------------------- Test_Hard_MPG_State -------------------//
       void Test_Hard_MPG_State() {
         if(selected_DRO != 0){
           mb.Hreg(50, selected_DRO);
@@ -567,7 +567,7 @@
         }
       }
 
-    //-------------------  Debug -------------------//
+    //------------------- Debug -------------------//
       void Debug() {
         unsigned long currentMillis = millis();
         if (currentMillis - previousMillis >= 250) {
@@ -624,7 +624,8 @@
       mb.addHreg(14);    // Spindle Speed override Watchdog
       mb.addHreg(15);    // Spindle Start / stop Watchdog
       mb.addHreg(16);    // coolant Start / stop Watchdog      
-      mb.addHreg(17);    // setXYZ Watchdog      
+      mb.addHreg(17);    // setXYZ Watchdog
+      mb.addHreg(18);    // IsMoving Watchdog      
     
     /*################ From slave to master ################*/
       mb.addHreg(50);    // selected_DRO

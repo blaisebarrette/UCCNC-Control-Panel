@@ -81,10 +81,16 @@
             exec.SetModbusregister(12, _HardSoftMPG_Watchdog);
         }
 
+        if(AS3.GetLED(137) == true || AS3.GetLED(138) == true){ // Watch MPG LED in "Diagnostic" page
+            exec.Callbutton(228); // Acivate "MPG Multi" Button
+            isHardMPG = 1;
+        }
+
         ushort isHardInUCCNCRegisters; exec.GetModbusregister(12, out isHardInUCCNCRegisters);
         if(isHardInUCCNCRegisters != 0){isHardInUCCNCRegisters = 1;}
         ushort isHardInButtons;
-        if(AS3jog.Getbuttonstate(161) == true || AS3jog.Getbuttonstate(162) == true){
+
+        if(AS3jog.Getbuttonstate(161) == true || AS3jog.Getbuttonstate(162) == true || exec.IsMoving()){
             isHardInButtons = 0;
         }else{
             isHardInButtons = 1;
@@ -98,7 +104,12 @@
                 exec.SetModbusregister(12, _Selected_DRO);
                 isHardMPG = 1;
             }
+        }
 
+        if(exec.IsMoving()){
+            exec.SetModbusregister(18, 1);
+        }else{
+            exec.SetModbusregister(18, 0);
         }
 
     //---- Feed Override ----//
