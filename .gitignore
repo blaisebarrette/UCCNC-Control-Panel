@@ -5,3 +5,4 @@
 .vscode/ipch
 .include
 .lib
+.lib/modbus-esp8266
