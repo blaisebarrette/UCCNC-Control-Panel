@@ -3,7 +3,7 @@
   #include <math.h>
   #include <Arduino.h>
   #include <U8g2lib.h>
-  //#include <SPI.h>
+  #include <WiFi.h>
   #include <ModbusRTU.h> // https://github.com/emelianov/modbus-esp8266
   #include <ESP32Encoder.h> // https://github.com/madhephaestus/ESP32Encoder
 
@@ -556,6 +556,8 @@
 /*################ Setup and loop ################*/
   void setup(void) {
     xTaskCreatePinnedToCore(SecondCoreCode, "Task1", 10000, NULL, 0, &Task1, 0); /* Second core implementation */
+    WiFi.mode(WIFI_OFF);
+    btStop();
 
     // Feedrate and Spindle Override encoders relevant setup //
       ESP32Encoder::useInternalWeakPullResistors = true;
