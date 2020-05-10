@@ -3,7 +3,7 @@
   #include <math.h>
   #include <Arduino.h>
   #include <U8g2lib.h>
-  #include <SPI.h>
+  //#include <SPI.h>
   #include <ModbusRTU.h> // https://github.com/emelianov/modbus-esp8266
   #include <ESP32Encoder.h> // https://github.com/madhephaestus/ESP32Encoder
 
@@ -220,7 +220,7 @@
         static char CharBuffer[10];
         if (!isMoving) {
           u8g2.setFont(u8g2_font_7x13B_tf);
-          sprintf(CharBuffer, "%S: %.3f", MPG_Selected_Axis, MPG_Selected_Multiplication);
+          sprintf(CharBuffer, "%s: %.3f", MPG_Selected_Axis, MPG_Selected_Multiplication);
           u8g2.drawStr(72, 24, CharBuffer);
         } else {
           u8g2.setFont(u8g2_font_7x13B_tf);
