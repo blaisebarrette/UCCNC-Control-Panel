@@ -1,6 +1,5 @@
 
 /*################ Libraries ################*/
-  #include <math.h>
   #include <Arduino.h>
   #include <U8g2lib.h>
   #include <ModbusRTU.h> // https://github.com/emelianov/modbus-esp8266
