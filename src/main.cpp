@@ -17,12 +17,12 @@
   #define txdPin 17 /*_______________________Modbus Serial TX pin                            */
   #define LCD1 18 /*_________________________LCD Clock (E)                                   */
   #define DTG_DRO_Select_Switch 19 /*________Switch that selects the "DTG" DRO               */
-  #define Machine_DRO_LED 21 /*______________LED that shows that the DRO is set to "Machine" */
+  #define DTG_DRO_LED 21 /*__________________LED that shows that the DRO is set to "Machine" */ 
   #define LCD4 22 /*_________________________LCD Reset (RST)                                 */
   #define LCD2 23 /*_________________________LCD data (R/W)                                  */
   #define Encode2_A_Pin 25 /*________________Encoder 2 A pin                                 */  
   #define Encode2_B_Pin 26 /*________________Encoder 2 B pin                                 */
-  #define DTG_DRO_LED 27 /*__________________LED that shows that the DRO is set to "DTG"     */
+  #define Machine_DRO_LED 27 /*______________LED that shows that the DRO is set to "DTG"     */ 
   #define Encode1_A_Pin 32 /*________________Encoder 1 B pin                                 */
   #define Encode1_B_Pin 33 /*________________Encoder 1 A pin                                 */
   #define MPG_Multiplicaton_pin 34 /*________MPG Axis Selection switch pin                   */
