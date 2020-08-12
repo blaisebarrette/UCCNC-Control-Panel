@@ -1,0 +1,8 @@
+if(!AS3.GetLED(4)){
+    if(!exec.IsMoving()){
+        exec.Callbutton(128);
+    }else{
+        exec.Callbutton(522);
+    }
+    exec.Wait(500);
+}
